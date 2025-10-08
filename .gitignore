@@ -1,2 +1,4 @@
 .idea/
 /web/app/vendor/
+.env
+etc/nginx/nginx.windows.conf
