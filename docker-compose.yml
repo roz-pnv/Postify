@@ -12,10 +12,15 @@ services:
       - internal  # Internal network for service communication
 
   php:
-    image: php:${PHP_VERSION:-8.2-fpm}  # PHP-FPM version from .env (default: 8.2)
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./web:/var/www/html  # Mount app code
+      - ./data/logs:/var/www/data/logs
       - ${PHP_INI_PATH:-./etc/php/php.ini}:/usr/local/etc/php/conf.d/php.ini  # Custom PHP config
+    env_file:
+      - .env
     networks:
       - internal
 
@@ -31,13 +36,17 @@ services:
   db:
     image: mysql:${MYSQL_VERSION:-8.0.34}  # MySQL version from .env (default: 8.0.34)
     restart: always
+    env_file:
+      - .env
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - db_data:/var/lib/mysql  # Persist DB data
+      - ./data/db/mysql:/var/lib/mysql  # Persist DB data
+    ports:
+      - "${MYSQL_PORT}:3306"
     networks:
       - internal
     healthcheck:
