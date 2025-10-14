@@ -8,6 +8,7 @@
   },
   "require": {
     "php": "^8.0",
-    "vlucas/phpdotenv": "^5.6"
+    "vlucas/phpdotenv": "^5.6",
+    "patricklouys/http": "^1.4"
   }
 }
