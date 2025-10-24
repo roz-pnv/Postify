@@ -2,7 +2,6 @@
 
 namespace App\Core;
 
-
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
