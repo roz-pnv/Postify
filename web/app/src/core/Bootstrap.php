@@ -12,12 +12,14 @@ use Psr\Log\LoggerInterface;
 use App\Core\Exception\NotFoundException;
 use App\Domain\Contracts\UserRepositoryInterface;
 use App\Domain\Contracts\PasswordHasherInterface;
+use App\Domain\Contracts\TokenGeneratorInterface;
 use App\Http\Requests\Stream;
 use App\Http\Requests\Uri;
 use App\Infrastructure\Persistence\DatabaseConnection;
 use App\Infrastructure\Persistence\DatabaseConnectionFactory;
 use App\Infrastructure\Persistence\MySQLUserRepository;
 use App\Infrastructure\Security\BcryptPasswordHasher;
+use App\Infrastructure\Security\JwtTokenGenerator;
 
 final class Bootstrap
 {
@@ -63,7 +65,7 @@ final class Bootstrap
         $container->set(Config::class, fn () => new Config());
 
         $container->set(LoggerInterface::class, fn ($c) =>
-        new Logger($c->get(Config::class)->get('logging.path'))
+            new Logger($c->get(Config::class)->get('logging.path'))
         );
 
         $container->set(Logger::class, fn ($c) =>
@@ -100,6 +102,13 @@ final class Bootstrap
 
         $container->set(PasswordHasherInterface::class, fn($c) =>
             new BcryptPasswordHasher($c->get(LoggerInterface::class))
+        );
+
+        $container->set(TokenGeneratorInterface::class, fn($c) =>
+            new JwtTokenGenerator(
+                $c->get(Config::class)->get('security.jwt_secret'),
+                $c->get(Config::class)->get('security.jwt_expiry')
+            )
         );
 
         self::$container = $container;
