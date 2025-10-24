@@ -1,110 +1,133 @@
 <?php
-namespace App\core;
 
-/**
- * The Bootstrap class is responsible for initializing core application components:
- * - Autoloading dependencies
- * - Loading environment variables
- * - Loading configuration files
- * - Initializing the logger and database (singleton-safe)
- */
-class Bootstrap
+namespace App\Core;
+
+use Dotenv\Dotenv;
+use Exception;
+
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+
+use App\Core\Exception\NotFoundException;
+use App\Domain\Contracts\UserRepositoryInterface;
+use App\Domain\Contracts\PasswordHasherInterface;
+use App\Http\Requests\Stream;
+use App\Http\Requests\Uri;
+use App\Infrastructure\Persistence\DatabaseConnection;
+use App\Infrastructure\Persistence\DatabaseConnectionFactory;
+use App\Infrastructure\Persistence\MySQLUserRepository;
+use App\Infrastructure\Security\BcryptPasswordHasher;
+
+final class Bootstrap
 {
-    // Singleton instances for shared access
-    private static ?Database $database = null;
-    private static ?Logger $logger = null;
+    private static ?ContainerInterface $container = null;
 
     /**
-     * Initializes the application core:
-     * - Loads Composer autoload
-     * - Loads .env variables
-     * - Loads configuration files
-     * - Initializes logger and database
+     * Initializes the application container and its dependencies.
+     *
+     * @param LoggerInterface $earlyLogger Logger used for early-stage error reporting
+     * @return ContainerInterface Initialized container instance
+     *
+     * @throws Exception If .env loading, config loading, or container build fails
+     * @throws ContainerExceptionInterface If container fails to resolve dependencies
+     * @throws NotFoundException If Logger service is not found
      */
-    public static function init(): void
+    public static function init(LoggerInterface $earlyLogger): ContainerInterface
     {
-        // 1️ Load Composer autoloader
+        if (self::$container !== null) {
+            return self::$container;
+        }
+
         require_once __DIR__ . '/../../vendor/autoload.php';
 
-        // 2️ Load environment variables from .env file
-        $envPath = realpath(__DIR__ . '/../../../../.env');
-        if ($envPath && file_exists($envPath)) {
-            self::loadEnv($envPath);
-        }
-
-        // 3 Load all configuration files (e.g., database, logging)
-        Config::load(__DIR__ . '/../../config');
-
-        // 4 Initialize logger if not already set
-        if (!self::$logger) {
-            $logConfig = Config::get('logging');
-            $logPath = $logConfig['path'] ?? (__DIR__ . '/../../../../data/logs/app.log');
-            self::$logger = new Logger($logPath);
-            self::$logger->info('Logger initialized.');
-        }
-
-        self::$logger->info('Bootstrap starting...');
-
-        // 5️ Initialize database if not already set
-        if (!self::$database) {
-            try {
-                $dbConfig = Config::get('database');
-                self::$database = new Database(PDOFactory::create($dbConfig, self::$logger));
-                self::$logger->info('Database initialized successfully.');
-            } catch (\Throwable $e) {
-                self::$logger->error('Database connection failed: ' . $e->getMessage());
-                throw $e;
+        try {
+            $envPath = realpath(__DIR__ . '/../../../../.env');
+            if ($envPath && file_exists($envPath)) {
+                Dotenv::createImmutable(dirname($envPath))->load();
             }
+        } catch (Exception $e) {
+            $earlyLogger->error('Failed to load .env: ' . $e->getMessage());
+            throw $e;
         }
 
-        self::$logger->info('Bootstrap completed successfully.');
+        try {
+            Config::load(__DIR__ . '/../../config');
+        } catch (Exception $e) {
+            $earlyLogger->error('Failed to load config: ' . $e->getMessage());
+            throw $e;
+        }
+
+        $container = new Container();
+
+        $container->set(Config::class, fn () => new Config());
+
+        $container->set(LoggerInterface::class, fn ($c) =>
+        new Logger($c->get(Config::class)->get('logging.path'))
+        );
+
+        $container->set(Logger::class, fn ($c) =>
+            $c->get(LoggerInterface::class)
+        );
+
+        $container->set(DatabaseConnectionFactory::class, fn($c) =>
+            new DatabaseConnectionFactory(
+                $c->get(Config::class)->get('database'),
+                $c->get(LoggerInterface::class)
+            )
+        );
+
+        $container->set(DatabaseConnection::class, fn($c) =>
+            new DatabaseConnection(
+                $c->get(DatabaseConnectionFactory::class)->create()
+            )
+        );
+
+        $container->set(UserRepositoryInterface::class, fn ($c) =>
+            new MySQLUserRepository(
+                $c->get(DatabaseConnection::class),
+                $c->get(LoggerInterface::class)
+            )
+        );
+
+        $container->set(Uri::class, fn () =>
+            new Uri($_SERVER['REQUEST_URI'] ?? '/')
+        );
+
+        $container->set(Stream::class, fn () =>
+            new Stream(fopen('php://input', 'r'))
+        );
+
+        $container->set(PasswordHasherInterface::class, fn($c) =>
+            new BcryptPasswordHasher($c->get(LoggerInterface::class))
+        );
+
+        self::$container = $container;
+
+        try {
+            self::$container->get(LoggerInterface::class)->info('Bootstrap initialized successfully.');
+        } catch (NotFoundException | ContainerExceptionInterface $e) {
+            $earlyLogger->error('Failed to log bootstrap success: ' . $e->getMessage());
+        }
+
+        return self::$container;
     }
 
     /**
-     * Returns the singleton database instance.
-     * Initializes it if not already available.
+     * Returns the initialized container.
      *
-     * @return Database
+     * @return ContainerInterface
+     * @throws Exception If initialization fails
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundException
      */
-    public static function getDatabase(): Database
+    public static function getContainer(): ContainerInterface
     {
-        if (!self::$database) {
-            self::init();
+        if (self::$container === null) {
+            $earlyLogger = new Logger(__DIR__ . '/../../../../data/logs/app.log');
+            return self::init($earlyLogger);
         }
-        return self::$database;
-    }
 
-    /**
-     * Returns the singleton logger instance.
-     * Initializes it if not already available.
-     *
-     * @return Logger
-     */
-    public static function getLogger(): Logger
-    {
-        if (!self::$logger) {
-            self::init();
-        }
-        return self::$logger;
-    }
-
-    /**
-     * Loads environment variables from a .env file manually.
-     * Each line must follow KEY=VALUE format.
-     * Lines starting with # or without = are ignored.
-     *
-     * @param string $path Absolute path to the .env file
-     */
-    private static function loadEnv(string $path): void
-    {
-        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            $trimmed = trim($line);
-            if ($trimmed === '' || str_starts_with($trimmed, '#')) continue;
-            if (!str_contains($trimmed, '=')) continue;
-
-            [$key, $value] = explode('=', $trimmed, 2);
-            putenv(trim($key) . '=' . trim($value));
-        }
+        return self::$container;
     }
 }
