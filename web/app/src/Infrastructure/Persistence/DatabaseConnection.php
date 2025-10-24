@@ -1,9 +1,10 @@
 <?php
-namespace App\core;
+
+namespace App\Infrastructure\Persistence;
 
 use PDO;
 
-class Database
+class DatabaseConnection
 {
     private PDO $pdo;
 

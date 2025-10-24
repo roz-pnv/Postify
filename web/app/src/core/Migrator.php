@@ -9,7 +9,7 @@ use PDO;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Log\LoggerInterface;
 
-use App\Infrastructure\Persistence\Database;
+use App\Infrastructure\Persistence\DatabaseConnection;
 
 class Migrator
 {
@@ -30,7 +30,7 @@ class Migrator
         try {
             $container = Bootstrap::getContainer();
 
-            $dbService = $container->get(Database::class);
+            $dbService = $container->get(DatabaseConnection::class);
             $this->pdo = $dbService->getConnection();
 
             $this->logger = $container->get(LoggerInterface::class);
