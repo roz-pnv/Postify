@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-
 use Psr\Http\Message\UriInterface;
 
 class Uri implements UriInterface
