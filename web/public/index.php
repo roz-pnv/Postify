@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
 use App\Core\Bootstrap;
-use App\Core\Router;
 use App\Core\Logger;
+use App\Core\Router;
 
-require_once __DIR__ . '/../app/vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $earlyLogger = new Logger(__DIR__ . '/../../data/logs/app.log');
 

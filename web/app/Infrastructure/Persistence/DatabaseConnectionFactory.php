@@ -25,7 +25,7 @@ class DatabaseConnectionFactory
             $this->config['driver'],
             $this->config['host'],
             $this->config['port'],
-            $this->config['database'],
+            $this->config['Database'],
             $this->config['charset']
         );
 
@@ -42,7 +42,7 @@ class DatabaseConnectionFactory
 
             $this->logger->info(sprintf(
                 "DatabaseConnection connected to '%s' on %s:%s as user '%s'.",
-                $this->config['database'],
+                $this->config['Database'],
                 $this->config['host'],
                 $this->config['port'],
                 $this->config['username']

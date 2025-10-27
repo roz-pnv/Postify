@@ -29,7 +29,7 @@ class MySQLUserRepository implements UserRepositoryInterface
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($data) {
-                $this->logger->info("User found by username: '{$username}'");
+                $this->logger->info("User found by username: '$username'");
 
                 return new User(
                     $data['id'],
@@ -39,7 +39,7 @@ class MySQLUserRepository implements UserRepositoryInterface
                 );
             }
 
-            $this->logger->info("No user found by username: '{$username}'");
+            $this->logger->info("No user found by username: '$username'");
 
             return null;
         } catch (Throwable $e) {

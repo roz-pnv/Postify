@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use InvalidArgumentException;
 use Throwable;
 
-use Psr\Log\LoggerInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 
 use App\Domain\Services\AuthService;
 use App\Http\Requests\LoginRequest;

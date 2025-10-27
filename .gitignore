@@ -1,5 +1,5 @@
 .idea/
-/web/app/vendor/
+vendor/
 .env
 etc/nginx/nginx.windows.conf
 data/

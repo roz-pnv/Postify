@@ -4,9 +4,9 @@ namespace App\Http\Requests;
 
 use BadMethodCallException;
 
-use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 class ServerRequest implements ServerRequestInterface
 {

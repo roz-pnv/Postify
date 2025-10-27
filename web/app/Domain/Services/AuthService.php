@@ -7,8 +7,8 @@ use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 use App\Domain\Contracts\PasswordHasherInterface;
-use App\Domain\Contracts\UserRepositoryInterface;
 use App\Domain\Contracts\TokenGeneratorInterface;
+use App\Domain\Contracts\UserRepositoryInterface;
 use App\Domain\Models\User;
 
 class AuthService

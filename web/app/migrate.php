@@ -1,21 +1,23 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/src/Core/Bootstrap.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/Core/Bootstrap.php';
 
-use App\Core\Bootstrap;
-use App\Core\Migrator;
-use App\Core\Logger;
+
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Log\LoggerInterface;
+
+use App\Core\Bootstrap;
+use App\Core\Logger;
+use App\Core\Migrator;
 
 try {
     $earlyLogger = new Logger(__DIR__ . '/../../data/logs/app.log');
     $container = Bootstrap::init($earlyLogger);
     $logger = $container->get(LoggerInterface::class);
 
-    $migrationsPath = __DIR__ . '/database/migrations';
+    $migrationsPath = __DIR__ . '/Database/migrations';
     $migrator = new Migrator($migrationsPath);
     $migrator->run();
 

@@ -10,9 +10,9 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 use App\Core\Exception\NotFoundException;
-use App\Domain\Contracts\UserRepositoryInterface;
 use App\Domain\Contracts\PasswordHasherInterface;
 use App\Domain\Contracts\TokenGeneratorInterface;
+use App\Domain\Contracts\UserRepositoryInterface;
 use App\Http\Requests\Stream;
 use App\Http\Requests\Uri;
 use App\Infrastructure\Persistence\DatabaseConnection;
@@ -31,7 +31,7 @@ final class Bootstrap
      * @param LoggerInterface $earlyLogger Logger used for early-stage error reporting
      * @return ContainerInterface Initialized container instance
      *
-     * @throws Exception If .env loading, config loading, or container build fails
+     * @throws Exception If .env loading, Config loading, or container build fails
      * @throws ContainerExceptionInterface If container fails to resolve dependencies
      * @throws NotFoundException If Logger service is not found
      */
@@ -41,7 +41,7 @@ final class Bootstrap
             return self::$container;
         }
 
-        require_once __DIR__ . '/../../vendor/autoload.php';
+        require_once __DIR__ . '/../../../vendor/autoload.php';
 
         try {
             $envPath = realpath(__DIR__ . '/../../../../.env');
@@ -54,9 +54,9 @@ final class Bootstrap
         }
 
         try {
-            Config::load(__DIR__ . '/../../config');
+            Config::load(__DIR__ . '/../../Config');
         } catch (Exception $e) {
-            $earlyLogger->error('Failed to load config: ' . $e->getMessage());
+            $earlyLogger->error('Failed to load Config: ' . $e->getMessage());
             throw $e;
         }
 
@@ -133,7 +133,7 @@ final class Bootstrap
     public static function getContainer(): ContainerInterface
     {
         if (self::$container === null) {
-            $earlyLogger = new Logger(__DIR__ . '/../../../../data/logs/app.log');
+            $earlyLogger = new Logger(__DIR__ . '/../../../../data/logs/App.log');
             return self::init($earlyLogger);
         }
 

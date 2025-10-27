@@ -9,7 +9,6 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Log\LoggerInterface;
 
 use App\Infrastructure\Persistence\DatabaseConnection;
-
 class Migrator
 {
     private PDO $pdo;

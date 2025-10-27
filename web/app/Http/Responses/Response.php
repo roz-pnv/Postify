@@ -4,6 +4,7 @@ namespace App\Http\Responses;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+
 use App\Http\Requests\Stream;
 
 class Response implements ResponseInterface
