@@ -1,5 +1,6 @@
 .idea/
 vendor/
 .env
+.env.test
 etc/nginx/nginx.windows.conf
 data/
